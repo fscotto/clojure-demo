@@ -1,13 +1,29 @@
-/target
-/classes
-/checkouts
-profiles.clj
+# Created by https://www.toptal.com/developers/gitignore/api/clojure,code
+# Edit at https://www.toptal.com/developers/gitignore?templates=clojure,code
+
+### Clojure ###
 pom.xml
 pom.xml.asc
 *.jar
 *.class
-/.lein-*
-/.nrepl-port
-/.prepl-port
-.hgignore
-.hg/
+/lib/
+/classes/
+/target/
+/checkouts/
+.lein-deps-sum
+.lein-repl-history
+.lein-plugins/
+.lein-failures
+.nrepl-port
+.cpcache/
+
+### Code ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+.calva/
+
+# End of https://www.toptal.com/developers/gitignore/api/clojure,code

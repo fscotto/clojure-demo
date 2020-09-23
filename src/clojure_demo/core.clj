@@ -390,3 +390,133 @@
 (defn to-csv
   [folks]
   (clojure.string/join "\n" (map #(clojure.string/join "," [(:name %) (:glitter-index %)]) folks)))
+
+;;========================= CHAPTER 5 ====================================
+
+;; This function is recursive, 
+;; but Clojure haven't tail recursion optimization (TCO)
+(defn sum-rec
+  ([vals] (sum-rec vals 0))
+  ([vals accumulating-total]
+   (if (empty? vals)
+     accumulating-total
+     (sum-rec (rest vals) (+ (first vals) accumulating-total)))))
+
+(defn sum-rec-tail
+  ([vals] (sum-rec-tail vals 0))
+  ([vals accumulating-total]
+   (if (empty? vals)
+     accumulating-total
+     (recur (rest vals) (+ (first vals) accumulating-total)))))
+
+;;======================================
+;; Function Composition
+;;======================================
+
+;; You can combine function using comp function.
+;; In this example comp create new function and apply
+;; * function and then inc on arguments 2 3.
+((comp inc *) 2 3)
+
+;; another example for comp use
+
+(def character
+  {:name "Smooches McCutes"
+   :attributes {:intelligence 10
+                :strength 4
+                :dexterity 5}})
+
+(def c-int (comp :intelligence :attributes))
+
+(def c-str (comp :strength :attributes))
+
+(def c-dex (comp :dexterity :attributes))
+
+(c-int character)
+(c-str character)
+(c-dex character)
+
+;; What do you do if one of the functions you want to compose needs
+;; to take more than one argument? You wrap it in an anonymous function.
+(defn spell-slots
+  [char]
+  (int (inc (/ (c-int char) 2))))
+
+(spell-slots character)
+
+(def spell-slots-comp (comp int inc #(/ % 2) c-int))
+
+;;======================================
+;; Memoization
+;;======================================
+
+;; Memoization lets you take advantage of referential transparency by storing
+;; the arguments passed to a function and the return value of the function.
+;; That way, subsequent calls to the function with the same arguments
+;; can return the result immediately. This is especially useful for functions
+;; that take a lot of time to run.
+
+(defn sleepy-identity
+  "Returns the given value after 1 second"
+  [x]
+  (Thread/sleep 1000)
+  x)
+
+(sleepy-identity "Mr. Fantastico")
+
+(def memo-sleepy-identity (memoize sleepy-identity))
+
+(memo-sleepy-identity "Mr. Fantastico")
+
+;;======================================
+;; Exercises
+;;======================================
+
+;; 1) You used (comp :intelligence :attributes) to create a function that
+;; returns a character’s intelligence. Create a new function, attr, that you
+;; can call like (attr :intelligence) and that does the same thing.
+(defn attr
+  [attribute]
+  (fn [x] (attribute (:attributes x))))
+
+;; 2) Implement the comp function.
+(defn my-comp
+  [f g]
+  (fn
+    ([] (f (g)))
+    ([x] (f (g x)))))
+
+;; 3) Implement the assoc-in function. Hint: use the assoc function and
+;; define its parameters as [m [k & ks] v].
+(defn my-assoc-in
+  [m [k & ks] v]
+  (loop
+   [map m
+    key k
+    keys ks
+    val v]
+    (if (empty? keys)
+      (assoc map key val)
+      (assoc map key (my-assoc-in (get map key {}) keys val)))))
+
+;; 4) Look up and use the update-in function.
+(update-in {:a {:b {:c 2}}} [:a :b :c] inc)
+
+;; 5) Implement update-in.
+(defn my-update-in
+  [m [k & ks] f & args]
+  (let
+   [map m
+    key k
+    keys ks
+    fn f
+    args args]
+    (if (empty? keys)
+      (let
+       [converter (partial fn (get map key))]
+        (assoc map key (apply converter args)))
+      (let
+       [updater (partial my-update-in (get map key {}) keys fn)]
+        (assoc map key (apply updater args))))))
+
+(my-update-in {:a {:b {:c 2}}} [:a :b :c] inc)
